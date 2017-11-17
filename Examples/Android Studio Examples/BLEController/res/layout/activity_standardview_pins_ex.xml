@@ -39,16 +39,41 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" 
             style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Inverse" 
-        /> 
-      <ScrollView 
+        />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/pins_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-          >
-          <LinearLayout
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:orientation="vertical"
-               android:id="@+id/pins_list"
-              /> 
-      </ScrollView>
+            android:orientation="vertical">
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/andrometer_output"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.jjoe64.graphview.GraphView
+                android:layout_width="match_parent"
+                android:layout_height="200dip"
+                android:id="@+id/accelerometer_graph" />
+
+            <com.jjoe64.graphview.GraphView
+                android:layout_width="match_parent"
+                android:layout_height="200dip"
+                android:id="@+id/ecg_graph" />
+
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

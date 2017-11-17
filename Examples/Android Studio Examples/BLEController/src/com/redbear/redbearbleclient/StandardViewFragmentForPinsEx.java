@@ -38,6 +38,10 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.Series;
 import com.redbear.RedBearService.IRedBearServiceEventListener;
 import com.redbear.RedBearService.RedBearService;
 import com.redbear.protocol.IRBLProtocol;
@@ -48,7 +52,7 @@ import com.redbear.redbearbleclient.data.PinInfo;
 public class StandardViewFragmentForPinsEx extends Fragment implements
 		IRBLProtocol {
 
-	final String TAG = "StandardViewFragmentForPins";
+	final String TAG = "StdViewFragmentForPins";
 	final long timeout = 3000;
 	public static final int RST_CODE = 10;
 	Device mDevice;
@@ -68,8 +72,15 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	TimerTask mTimerTask;
 	boolean timerFlag;
 
-	public StandardViewFragmentForPinsEx() {
+    LineGraphSeries<DataPoint> accelerometer_series;
+    LineGraphSeries<DataPoint> ecg_series;
 
+    int zeroX = 512;
+    int zeroY = 512;
+    int zeroZ = 512;
+    double time = 0.05;
+
+	public StandardViewFragmentForPinsEx() {
 	}
 
 	public StandardViewFragmentForPinsEx(Device mDevice, RedBearService mRedBearService) {
@@ -78,7 +89,10 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		changeValues = new HashMap<String, PinInfo>();
 		list_pins_views = new HashMap<String, View>();
 		this.mRedBearService = mRedBearService;
-	}
+
+        ecg_series = new LineGraphSeries<DataPoint>();
+        accelerometer_series = new LineGraphSeries<DataPoint>();
+    }
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -90,6 +104,15 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		textName = (TextView) view.findViewById(R.id.text_devicename);
 		pins_list = (LinearLayout) view.findViewById(R.id.pins_list);
 		pins_list.setEnabled(false);
+
+		pins_list.setVisibility(View.GONE);
+        GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
+        ecg_graph.addSeries(ecg_series);
+
+        GraphView accelerometer_graph = (GraphView) view.findViewById(R.id.accelerometer_graph);
+        accelerometer_graph.addSeries(accelerometer_series);
+
+
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
 			textName.setText(mDevice.name);
@@ -360,6 +383,9 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 							isFirstReadPin = false;
 						}
 						pins_list.setEnabled(true);
+
+						pins.
+                        updateAccelerometerSeries();
 					}
 				});
 			}
@@ -857,4 +883,11 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		}
 		return null;
 	}
+
+	protected void updateAccelerometerSeries(PinInfo pinX, PinInfo pinY, PinInfo pinZ, double time) {
+	    double mag = Math.pow( (double)(pinX.value - zeroX), 2 ) + Math.pow( (double)(pinY.value - zeroY), 2 ) + Math.pow( (double)(pinZ.value - zeroZ), 2 );
+        mag = Math.pow(mag, 0.5);
+	    accelerometer_series.appendData(new DataPoint(time, mag), true, 5*1000/50);
+    }
+
 }

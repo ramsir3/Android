@@ -59,8 +59,7 @@ public class MainPage extends Activity {
 		View actionbar_layout = LayoutInflater.from(this).inflate(
 				R.layout.action_bar, null);
 		version_name = (TextView) actionbar_layout.findViewById(R.id.version);
-		version_name.setText("v"
-				+ getResources().getString(R.string.version_name));
+		version_name.setText("v" + getResources().getString(R.string.version_name));
 
 		final ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
@@ -72,7 +71,7 @@ public class MainPage extends Activity {
 		String osVersion = Build.VERSION.RELEASE;
 //		if ((osVersion.charAt(0)) == '4' && (osVersion.charAt(1) == '.')
 //				&& (osVersion.charAt(2) >= '3')) {
-if (android.os.Build.VERSION.SDK_INT >= 18) {
+		if (android.os.Build.VERSION.SDK_INT >= 18) {
 		} else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(MainPage.this);
 			dialog.setTitle("Error");

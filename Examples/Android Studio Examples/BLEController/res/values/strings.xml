@@ -23,6 +23,6 @@
 	<string name="label_no_devices">No BLE device was found.</string>
 	<string name="bluetooth_not_enable">Bluetooth is not enable!</string>
 	<string name="tip_dialog_title">Tip</string>
-	<string name="ok_title">Ok</string>
+	<string name="ok_title">OK</string>
 	<string name="version_name">1.0</string>
 </resources>
