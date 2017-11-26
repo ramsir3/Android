@@ -68,17 +68,28 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	HashMap<String, PinInfo> changeValues; // to init value
 	HashMap<String, View> list_pins_views = null;
 	PinAdapter mAdapter;
-	Timer mTimer = new Timer();
-	TimerTask mTimerTask;
+    Timer mTimer = new Timer();
+    Timer mDataTimer = new Timer();
+    TimerTask mTimerTask;
+    TimerTask mDataTimerTask;
 	boolean timerFlag;
+
+    private Runnable mTimer2;
 
     LineGraphSeries<DataPoint> accelerometer_series;
     LineGraphSeries<DataPoint> ecg_series;
 
+    TextView textAccelerometer;
+    TextView textECG;
+
     int zeroX = 512;
     int zeroY = 512;
     int zeroZ = 512;
-    double time = 0.05;
+    final double timeStep = 0.05;
+    final int pinXnumber = 18;
+    final int pinYnumber = 19;
+    final int pinZnumber = 20;
+    double time = 0;
 
 	public StandardViewFragmentForPinsEx() {
 	}
@@ -106,12 +117,15 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		pins_list.setEnabled(false);
 
 		pins_list.setVisibility(View.GONE);
-        GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
-        ecg_graph.addSeries(ecg_series);
+//        GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
+//        ecg_graph.addSeries(ecg_series);
+
+        textAccelerometer = (TextView) view.findViewById(R.id.Accelerometer);
+        textECG = (TextView) view.findViewById(R.id.ECG);
 
         GraphView accelerometer_graph = (GraphView) view.findViewById(R.id.accelerometer_graph);
         accelerometer_graph.addSeries(accelerometer_series);
-
+        accelerometer_graph.setEnabled(true);
 
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
@@ -124,6 +138,35 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 			mProtocol = new RBLProtocol(mDevice.address);
 			mProtocol.setIRBLProtocol(this);
 		}
+
+
+        mDataTimerTask = new TimerTask() {
+
+            @Override
+            public void run() {
+//                Log.d(TAG, "HELLO: " + pins.size());
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (pins.size() > 16) {
+//                    pinX != null && pinY != null && pinZ != null
+                            PinInfo pinX = pins.get(pins.keyAt(pinXnumber));
+                            PinInfo pinY = pins.get(pins.keyAt(pinYnumber));
+                            PinInfo pinZ = pins.get(pins.keyAt(pinZnumber));
+
+
+                            Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
+                            double am = updateAccelerometerSeries(pinX, pinY, pinZ, time);
+                            updateAccelText(am);
+//            mHandler.postDelayed(this, 200);
+                        }
+                    }
+                });
+
+            }
+        };
+
+		mDataTimer.schedule(mDataTimerTask, 0, 1000/33);
 
 		timerFlag = false;
 		mTimerTask = new TimerTask() {
@@ -147,6 +190,8 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 				}
 			}
 		};
+
+
 
 		return view;
 	}
@@ -198,6 +243,38 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 				}
 //			}
 //		}, 1000);
+        if (textAccelerometer != null) {
+		    textAccelerometer.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (mProtocol != null && pins.size() > 19) {
+//                    pinX != null && pinY != null && pinZ != null
+                        PinInfo pinX = pins.get(pins.keyAt(pinXnumber));
+                        PinInfo pinY = pins.get(pins.keyAt(pinYnumber));
+                        PinInfo pinZ = pins.get(pins.keyAt(pinZnumber));
+
+                        pinX.mode = ANALOG;
+                        pinY.mode = ANALOG;
+                        pinZ.mode = ANALOG;
+
+                        Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX, pinY, pinZ));
+                        updateAccelerometerSeries(pinX, pinY, pinZ, time);
+                        mProtocol.queryProtocolVersion();
+
+//            mHandler.postDelayed(this, 200);
+                    }
+                    mHandler.sendEmptyMessageDelayed(1, timeout);
+                }
+            }, 1000);
+        }
+
+//        mTimer2 = new Runnable() {
+//            @Override
+//            public void run() {
+//
+//            }
+//        };
+//        mHandler.postDelayed(mTimer2, 1000);
 
 		super.onResume();
 	}
@@ -384,8 +461,6 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 						}
 						pins_list.setEnabled(true);
 
-						pins.
-                        updateAccelerometerSeries();
 					}
 				});
 			}
@@ -884,10 +959,16 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		return null;
 	}
 
-	protected void updateAccelerometerSeries(PinInfo pinX, PinInfo pinY, PinInfo pinZ, double time) {
+	protected double updateAccelerometerSeries(PinInfo pinX, PinInfo pinY, PinInfo pinZ, double time) {
+	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
 	    double mag = Math.pow( (double)(pinX.value - zeroX), 2 ) + Math.pow( (double)(pinY.value - zeroY), 2 ) + Math.pow( (double)(pinZ.value - zeroZ), 2 );
         mag = Math.pow(mag, 0.5);
 	    accelerometer_series.appendData(new DataPoint(time, mag), true, 5*1000/50);
+	    time += timeStep;
+	    return mag;
     }
 
+    protected void updateAccelText(double mag) {
+	    textAccelerometer.setText("Acceleration: " + mag);
+	}
 }
