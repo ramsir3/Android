@@ -39,6 +39,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.Series;
@@ -79,16 +80,20 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     LineGraphSeries<DataPoint> accelerometer_series;
     LineGraphSeries<DataPoint> ecg_series;
 
+    Button zeroAcc;
     TextView textAccelerometer;
     TextView textECG;
 
     int zeroX = 512;
     int zeroY = 512;
     int zeroZ = 512;
-    final double timeStep = 0.05;
+    double timeStep = 1/33;
     final int pinXnumber = 18;
     final int pinYnumber = 19;
     final int pinZnumber = 20;
+    PinInfo pinX;
+    PinInfo pinY;
+    PinInfo pinZ;
     double time = 0;
 
 	public StandardViewFragmentForPinsEx() {
@@ -116,16 +121,24 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		pins_list = (LinearLayout) view.findViewById(R.id.pins_list);
 		pins_list.setEnabled(false);
 
-		pins_list.setVisibility(View.GONE);
+//		pins_list.setVisibility(View.GONE);
 //        GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
 //        ecg_graph.addSeries(ecg_series);
 
         textAccelerometer = (TextView) view.findViewById(R.id.Accelerometer);
         textECG = (TextView) view.findViewById(R.id.ECG);
 
+        zeroAcc = (Button) view.findViewById(R.id.zeroAcc);
+
         GraphView accelerometer_graph = (GraphView) view.findViewById(R.id.accelerometer_graph);
+        accelerometer_series = new LineGraphSeries<DataPoint>();
         accelerometer_graph.addSeries(accelerometer_series);
         accelerometer_graph.setEnabled(true);
+        Viewport viewport = accelerometer_graph.getViewport();
+        viewport.setXAxisBoundsManual(true);
+        viewport.setMinX(0);
+        viewport.setMaxX(15);
+        viewport.setScrollable(true);
 
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
@@ -139,25 +152,53 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 			mProtocol.setIRBLProtocol(this);
 		}
 
+		zeroAcc.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if ( pinX != null && pinY != null && pinZ != null) {
+                    zeroX = pinX.value;
+                    zeroY = pinY.value;
+                    zeroZ = pinZ.value;
+                }
+            }
+        });
 
         mDataTimerTask = new TimerTask() {
 
             @Override
             public void run() {
-//                Log.d(TAG, "HELLO: " + pins.size());
+                Log.d(TAG, "HELLO: " + pins.size());
+                if (getActivity() == null) {
+                    return;
+                }
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (pins.size() > 16) {
+                        if (pins != null && pins.size() > 16) {
 //                    pinX != null && pinY != null && pinZ != null
-                            PinInfo pinX = pins.get(pins.keyAt(pinXnumber));
-                            PinInfo pinY = pins.get(pins.keyAt(pinYnumber));
-                            PinInfo pinZ = pins.get(pins.keyAt(pinZnumber));
 
-
-                            Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
-                            double am = updateAccelerometerSeries(pinX, pinY, pinZ, time);
-                            updateAccelText(am);
+                            int p = 0;
+                            while (p < pins.size() && (pinX == null || pinY == null || pinZ == null)) {
+                                Log.i(TAG, "Looping at: "+p  );
+                                PinInfo curP = pins.valueAt(p);
+                                if (curP.pin == pinXnumber) {
+                                    pinX = curP;
+                                    Log.i(TAG, "Found: "+pinX.pin  );
+                                } else if (curP.pin == pinYnumber) {
+                                    pinY = curP;
+                                    Log.i(TAG, "Found: "+pinY.pin  );
+                                } else if (curP.pin == pinZnumber) {
+                                    pinZ = curP;
+                                    Log.i(TAG, "Found: "+pinZ.pin  );
+                                }
+                                p++;
+                            }
+                            if ( pinX != null && pinY != null && pinZ != null) {
+                                Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
+                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time++);
+                                Log.i(TAG, "Length of Series: " + time + ", " + accelerometer_series.getHighestValueX());
+                                updateAccelText(am);
+                            }
 //            mHandler.postDelayed(this, 200);
                         }
                     }
@@ -243,30 +284,6 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 				}
 //			}
 //		}, 1000);
-        if (textAccelerometer != null) {
-		    textAccelerometer.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (mProtocol != null && pins.size() > 19) {
-//                    pinX != null && pinY != null && pinZ != null
-                        PinInfo pinX = pins.get(pins.keyAt(pinXnumber));
-                        PinInfo pinY = pins.get(pins.keyAt(pinYnumber));
-                        PinInfo pinZ = pins.get(pins.keyAt(pinZnumber));
-
-                        pinX.mode = ANALOG;
-                        pinY.mode = ANALOG;
-                        pinZ.mode = ANALOG;
-
-                        Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX, pinY, pinZ));
-                        updateAccelerometerSeries(pinX, pinY, pinZ, time);
-                        mProtocol.queryProtocolVersion();
-
-//            mHandler.postDelayed(this, 200);
-                    }
-                    mHandler.sendEmptyMessageDelayed(1, timeout);
-                }
-            }, 1000);
-        }
 
 //        mTimer2 = new Runnable() {
 //            @Override
@@ -961,14 +978,19 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
 	protected double updateAccelerometerSeries(PinInfo pinX, PinInfo pinY, PinInfo pinZ, double time) {
 	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
-	    double mag = Math.pow( (double)(pinX.value - zeroX), 2 ) + Math.pow( (double)(pinY.value - zeroY), 2 ) + Math.pow( (double)(pinZ.value - zeroZ), 2 );
+	    double mag = Math.pow( convert2Gs(pinX.value, zeroX), 2 ) + Math.pow( convert2Gs(pinY.value, zeroY), 2 ) + Math.pow( convert2Gs(pinZ.value, zeroZ), 2 );
         mag = Math.pow(mag, 0.5);
-	    accelerometer_series.appendData(new DataPoint(time, mag), true, 5*1000/50);
-	    time += timeStep;
+	    accelerometer_series.appendData(new DataPoint(time / 33, mag), true, 20*1000/33);
 	    return mag;
+    }
+
+    protected double convert2Gs (int rawSensor, int zero) {
+	    return (double)((rawSensor - zero) * 200 / zero);
     }
 
     protected void updateAccelText(double mag) {
 	    textAccelerometer.setText("Acceleration: " + mag);
 	}
+
+
 }

@@ -41,6 +41,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <Button
+        android:id="@+id/zeroAcc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Zero Acceleration" />
+
     <TextView
         android:id="@+id/Accelerometer"
         android:layout_width="match_parent"
@@ -53,66 +59,28 @@
         android:layout_height="wrap_content"
         android:text="Heart Rate" />
 
-    <TableLayout
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/accelerometer_graph"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:visibility="visible" />
 
-        <TableRow
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:visibility="visible">
+
+
+        <LinearLayout
+            android:id="@+id/pins_list"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fillViewport="true"
-                android:visibility="visible">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="visible">
-
-                    <com.jjoe64.graphview.GraphView
-                        android:id="@+id/accelerometer_graph"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:visibility="visible" />
-
-                    <!--<com.jjoe64.graphview.GraphView-->
-                    <!--android:id="@+id/ecg_graph"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="200dip" />-->
-
-                </LinearLayout>
-            </ScrollView>
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1">
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fillViewport="true"
-                android:visibility="visible">
-
-
-                <LinearLayout
-                    android:id="@+id/pins_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                </LinearLayout>
-            </ScrollView>
-        </TableRow>
-
-    </TableLayout>
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

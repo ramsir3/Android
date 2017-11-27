@@ -75,6 +75,7 @@ public final class R {
     public static final int text_rssi=0x7f040022;
     public static final int uuid=0x7f040023;
     public static final int version=0x7f040024;
+    public static final int zeroAcc=0x7f040025;
   }
   public static final class layout {
     public static final int action_bar=0x7f050000;
