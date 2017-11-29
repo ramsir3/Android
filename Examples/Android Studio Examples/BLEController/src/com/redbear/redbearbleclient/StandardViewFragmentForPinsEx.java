@@ -87,13 +87,17 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     int zeroX = 512;
     int zeroY = 512;
     int zeroZ = 512;
-    double timeStep = 1/33;
+    final int windowSize = 10;
+    final int timeStep = 50; //ms
+    final int maxPoints = 100 + (int)(windowSize*1000/timeStep);
     final int pinXnumber = 18;
     final int pinYnumber = 19;
     final int pinZnumber = 20;
+    final int pinHnumber = 21;
     PinInfo pinX;
     PinInfo pinY;
     PinInfo pinZ;
+    PinInfo pinH;
     double time = 0;
 
 	public StandardViewFragmentForPinsEx() {
@@ -134,11 +138,21 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         accelerometer_series = new LineGraphSeries<DataPoint>();
         accelerometer_graph.addSeries(accelerometer_series);
         accelerometer_graph.setEnabled(true);
-        Viewport viewport = accelerometer_graph.getViewport();
-        viewport.setXAxisBoundsManual(true);
-        viewport.setMinX(0);
-        viewport.setMaxX(15);
-        viewport.setScrollable(true);
+        Viewport viewportA = accelerometer_graph.getViewport();
+        viewportA.setXAxisBoundsManual(true);
+        viewportA.setMinX(0);
+        viewportA.setMaxX(windowSize);
+        viewportA.setScrollable(true);
+
+        GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
+        ecg_series = new LineGraphSeries<DataPoint>();
+        ecg_graph.addSeries(ecg_series);
+        ecg_graph.setEnabled(true);
+        Viewport viewportE = ecg_graph.getViewport();
+        viewportE.setXAxisBoundsManual(true);
+        viewportE.setMinX(0);
+        viewportE.setMaxX(windowSize);
+        viewportE.setScrollable(true);
 
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
@@ -178,26 +192,37 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 //                    pinX != null && pinY != null && pinZ != null
 
                             int p = 0;
-                            while (p < pins.size() && (pinX == null || pinY == null || pinZ == null)) {
+                            while (p < pins.size() && (pinX == null || pinY == null || pinZ == null || pinH == null)) {
                                 Log.i(TAG, "Looping at: "+p  );
                                 PinInfo curP = pins.valueAt(p);
                                 if (curP.pin == pinXnumber) {
                                     pinX = curP;
                                     Log.i(TAG, "Found: "+pinX.pin  );
-                                } else if (curP.pin == pinYnumber) {
+                                }
+                                if (curP.pin == pinYnumber) {
                                     pinY = curP;
                                     Log.i(TAG, "Found: "+pinY.pin  );
-                                } else if (curP.pin == pinZnumber) {
+                                }
+                                if (curP.pin == pinZnumber) {
                                     pinZ = curP;
                                     Log.i(TAG, "Found: "+pinZ.pin  );
                                 }
+                                if (curP.pin == pinHnumber) {
+                                    pinH = curP;
+                                    Log.i(TAG, "Found: "+pinH.pin  );
+                                }
                                 p++;
                             }
-                            if ( pinX != null && pinY != null && pinZ != null) {
-                                Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
-                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time++);
-                                Log.i(TAG, "Length of Series: " + time + ", " + accelerometer_series.getHighestValueX());
-                                updateAccelText(am);
+                            if (pinH != null) {
+//                            if (pinX != null && pinY != null && pinZ != null && pinH != null) {
+//                                Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
+//                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time++, timeStep);
+//                                Log.i(TAG, "Acc Series: " + time + ", " + accelerometer_series.getHighestValueX());
+                                Log.i(TAG, String.format("h: %d", pinH.value));
+                                double em = updateECGSeries(pinH, time++, timeStep);
+                                Log.i(TAG, "ECG Series: " + time + ", " + ecg_series.getHighestValueX());
+//                                updateAccelText(am);
+                                updateECGText(em);
                             }
 //            mHandler.postDelayed(this, 200);
                         }
@@ -207,7 +232,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
             }
         };
 
-		mDataTimer.schedule(mDataTimerTask, 0, 1000/33);
+		mDataTimer.schedule(mDataTimerTask, 0, timeStep);
 
 		timerFlag = false;
 		mTimerTask = new TimerTask() {
@@ -976,21 +1001,34 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		return null;
 	}
 
-	protected double updateAccelerometerSeries(PinInfo pinX, PinInfo pinY, PinInfo pinZ, double time) {
-	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
+	protected double updateAccelerometerSeries(PinInfo pinX, PinInfo pinY, PinInfo pinZ, double time, int timeStep) {
+//	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
 	    double mag = Math.pow( convert2Gs(pinX.value, zeroX), 2 ) + Math.pow( convert2Gs(pinY.value, zeroY), 2 ) + Math.pow( convert2Gs(pinZ.value, zeroZ), 2 );
         mag = Math.pow(mag, 0.5);
-	    accelerometer_series.appendData(new DataPoint(time / 33, mag), true, 20*1000/33);
+	    accelerometer_series.appendData(new DataPoint((time * timeStep)/1000.0, mag), true, maxPoints);
 	    return mag;
     }
 
     protected double convert2Gs (int rawSensor, int zero) {
-	    return (double)((rawSensor - zero) * 200 / zero);
+	    return ((rawSensor - zero) * 200.0 / zero);
+    }
+
+    protected double updateECGSeries(PinInfo pinH, double time, int timeStep) {
+//	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
+        double mag = pinH.value;
+//        mag = Math.pow(mag, 0.5);
+
+        ecg_series.appendData(new DataPoint((time * timeStep)/1000.0, mag), true, maxPoints);
+        return mag;
     }
 
     protected void updateAccelText(double mag) {
-	    textAccelerometer.setText("Acceleration: " + mag);
-	}
+        textAccelerometer.setText(String.format("Acceleration: %.0f", mag));
+    }
+
+    protected void updateECGText(double mag) {
+        textECG.setText(String.format("Heart Rate: %.0f", mag));
+    }
 
 
 }
