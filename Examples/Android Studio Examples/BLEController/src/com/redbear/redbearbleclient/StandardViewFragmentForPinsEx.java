@@ -213,15 +213,16 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
                                 }
                                 p++;
                             }
-                            if (pinH != null) {
-//                            if (pinX != null && pinY != null && pinZ != null && pinH != null) {
-//                                Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
-//                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time++, timeStep);
-//                                Log.i(TAG, "Acc Series: " + time + ", " + accelerometer_series.getHighestValueX());
+                            //if (pinH != null) {
+                            if (pinX != null && pinY != null && pinZ != null && pinH != null) {
+                                Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
+                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time++, timeStep);
+                                Log.i(TAG, "Acc Series: " + time + ", " + accelerometer_series.getHighestValueX());
                                 Log.i(TAG, String.format("h: %d", pinH.value));
                                 double em = updateECGSeries(pinH, time++, timeStep);
                                 Log.i(TAG, "ECG Series: " + time + ", " + ecg_series.getHighestValueX());
-//                                updateAccelText(am);
+//                                u
+// '''' dateAccelText(am);
                                 updateECGText(em);
                             }
 //            mHandler.postDelayed(this, 200);

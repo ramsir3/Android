@@ -35,7 +35,7 @@ public class LogoView extends View {
 	
 	void initRes()
 	{
-		image_logo =  new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.splash));
+		image_logo =  new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.layers));
 	 }
 
 	@Override

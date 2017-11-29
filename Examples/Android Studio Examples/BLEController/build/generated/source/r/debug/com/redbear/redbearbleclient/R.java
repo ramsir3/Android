@@ -30,12 +30,12 @@ public final class R {
     public static final int arrow=0x7f030001;
     public static final int button_clicked=0x7f030002;
     public static final int button_selector=0x7f030003;
-    public static final int ic_launcher=0x7f030004;
-    public static final int mainpage_listview_item_bg=0x7f030005;
+    public static final int mainpage_listview_item_bg=0x7f030004;
+    public static final int patch_concept=0x7f030005;
     public static final int remove_icon=0x7f030006;
     public static final int right_row=0x7f030007;
     public static final int setting_icon=0x7f030008;
-    public static final int splash=0x7f030009;
+    public static final int layers =0x7f030009;
   }
   public static final class id {
     public static final int Accelerometer=0x7f040000;
