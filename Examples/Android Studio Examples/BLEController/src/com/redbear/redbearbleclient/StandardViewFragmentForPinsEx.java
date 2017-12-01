@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -79,6 +82,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
     LineGraphSeries<DataPoint> accelerometer_series;
     LineGraphSeries<DataPoint> ecg_series;
+	LineGraphSeries<DataPoint> hrv_series;
 
     Button zeroAcc;
     TextView textAccelerometer;
@@ -99,6 +103,8 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     PinInfo pinZ;
     PinInfo pinH;
     double time = 0;
+    long BPM = 0;
+	double HRV = 0;
 
 	public StandardViewFragmentForPinsEx() {
 	}
@@ -111,6 +117,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		this.mRedBearService = mRedBearService;
 
         ecg_series = new LineGraphSeries<DataPoint>();
+		hrv_series = new LineGraphSeries<DataPoint>();
         accelerometer_series = new LineGraphSeries<DataPoint>();
     }
 
@@ -153,6 +160,16 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         viewportE.setMinX(0);
         viewportE.setMaxX(windowSize);
         viewportE.setScrollable(true);
+
+//		GraphView hrv_graph = (GraphView) view.findViewById(R.id.hrv_graph);
+//		hrv_series = new LineGraphSeries<DataPoint>();
+//		hrv_graph.addSeries(hrv_series);
+//		hrv_graph.setEnabled(true);
+//		Viewport viewportF = hrv_graph.getViewport();
+//		viewportF.setXAxisBoundsManual(true);
+//		viewportF.setMinX(0);
+//		viewportF.setMaxX(windowSize);
+//		viewportF.setScrollable(true);
 
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
@@ -221,6 +238,10 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
                                 Log.i(TAG, String.format("h: %d", pinH.value));
                                 double em = updateECGSeries(pinH, time++, timeStep);
                                 Log.i(TAG, "ECG Series: " + time + ", " + ecg_series.getHighestValueX());
+								Log.i(TAG, String.format("ibi: %d", HRV));
+//								double fm = updateHRVSeries(pinH, time++, timeStep);
+								Log.i(TAG, "HRV Series: " + time + ", " + hrv_series.getHighestValueX());
+
 //                                u
 // '''' dateAccelText(am);
                                 updateECGText(em);
@@ -1017,11 +1038,236 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     protected double updateECGSeries(PinInfo pinH, double time, int timeStep) {
 //	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
         double mag = pinH.value;
-//        mag = Math.pow(mag, 0.5);
+//    mag = Math.pow(mag, 0.5);
+		ecg_series.appendData(new DataPoint((time * timeStep)/1000.0, mag), true, maxPoints);
 
-        ecg_series.appendData(new DataPoint((time * timeStep)/1000.0, mag), true, maxPoints);
-        return mag;
-    }
+//		code adapted from WorldFamousElectronics/PulseSensor_Amped_Arduino
+
+		double[] rate;
+		rate = new double[10];                    // array to hold last ten IBI values
+		double sampleCounter = 0;          // used to determine pulse timing
+		double lastBeatTime = 0;           // used to find IBI
+		double P =512;                      // used to find peak in pulse wave, seeded
+		double T = 512;                     // used to find trough in pulse wave, seeded
+		double thresh = 530;                // used to find instant moment of heart beat, seeded
+		double amp = 0;                   // used to hold amplitude of pulse waveform, seeded
+		boolean firstBeat = true;        // used to seed rate array so we startup with reasonable BPM
+		boolean secondBeat = false;      // used to seed rate array so we startup with reasonable BPM
+
+		//added variables?
+		double IBI = 0; //just has to make it so that IBI/5*3 is smaller than N with N being 2
+		boolean Pulse = false;
+
+		sampleCounter += 2;                         // keep track of the time in mS with this variable, currently sampling every 2mS
+		double N = sampleCounter - lastBeatTime;       // monitor the time since the last beat to avoid noise
+		if(mag < thresh && N > (IBI/5)*3){       // avoid dichrotic noise by waiting 3/5 of last IBI
+				if (mag < T){                        // T is the trough
+					T = mag;                         // keep track of lowest point in pulse wave
+				}
+			}
+
+		if(mag > thresh && mag > P){          // thresh condition helps avoid noise
+				P = mag;                             // P is the peak
+		}                                        // keep track of highest point in pulse wave
+
+//		  NOW IT'S TIME TO LOOK FOR THE HEART BEAT
+		//*may not need entire code, just mainly need to update IBI*
+//		  signal surges up in value every time there is a pulse
+			if (N > 250){                                   // avoid high frequency noise
+				if ( (mag > thresh) && (Pulse == false) && (N > (IBI/5)*3) ){
+					Pulse = true;                               // set the Pulse flag when we think there is a pulse
+					IBI = sampleCounter - lastBeatTime;         // measure time between beats in mS = R-R interval!
+					lastBeatTime = sampleCounter;               // keep track of time for next pulse
+
+					if(secondBeat){                        // if this is the second beat, if secondBeat == TRUE
+						secondBeat = false;                  // clear secondBeat flag
+						for(int i=0; i<=9; i++){             // seed the running total to get a realistic BPM at startup
+							rate[i] = IBI;
+						}
+					}
+
+					if(firstBeat){                         // if it's the first time we found a beat, if firstBeat == TRUE
+						firstBeat = false;                   // clear firstBeat flag
+						secondBeat = true;                   // set the second beat flag
+//						sei();                               // enable interrupts again
+//						return;                              // IBI value is unreliable so discard it
+					}
+
+					// keep a running total of the last 10 IBI values
+					long runningTotal = 0;                  // clear the runningTotal variable
+
+					for(int i=0; i<=8; i++){                // shift data in the rate array
+						rate[i] = rate[i+1];                  // and drop the oldest IBI value
+						runningTotal += rate[i];              // add up the 9 oldest IBI values
+					}
+
+					rate[9] = IBI;                          // add the latest IBI to the rate array
+					runningTotal += rate[9];                // add the latest IBI to runningTotal
+					runningTotal /= 10;                     // average the last 10 IBI values
+					BPM = 60000/runningTotal;               // how many beats can fit into a minute? that's BPM!
+					//HR is 60000/IBI, so runningTotal might be the new IBI? If so...
+
+//					adapted from https://github.com/jkeech/BioInk/blob/master/src/com/vitaltech/bioink/User.java
+					boolean hrv_active = false;
+					List<Long> rrq;
+					final int qsize = 20;
+					rrq = Collections.synchronizedList(new ArrayList<Long>());
+
+//					take addRR out of the separate function?
+					int size = rrq.size();
+					//check if new RR interval value has been received. if so, add to the list
+					if(rrq.isEmpty()){
+						rrq.add(runningTotal);
+					}else if(runningTotal != rrq.get(size - 1)){
+						if(rrq.size() < qsize){
+							rrq.add(runningTotal);
+						}else{
+							//list is full, remove oldest value and add new to the end of the list
+							rrq.remove(0);
+							rrq.add(runningTotal);
+						} //check if hrv was inactive and needs to be activated
+						if(qsize == rrq.size() && !hrv_active){
+							hrv_active = true;
+						}
+					}else{
+						//no new value to be added, exit
+					}
+
+//					calculateHRV without the function
+						float rmssd = 0f;
+						if(hrv_active){
+							float ssd = 0;
+							float previous = -1;
+
+							synchronized(rrq) {
+								Iterator<Long> i = rrq.iterator(); // Must be in synchronized block
+
+								while(i.hasNext()){
+									float rri = Math.abs(i.next());
+									if(previous == -1){
+										previous = Math.abs(rri);
+										continue;
+									}else{
+										//calculate consecutive difference
+										float diff = previous - rri;
+										diff = diff * diff;
+										//add the new square difference to the total
+										ssd = ssd + diff;
+										//update the previous value
+										previous = rri;
+									}
+								}
+							}
+							//calculate the MSSD
+							ssd = ssd / (rrq.size() - 1);
+							//calculate the RMSSD value and update it to the HRV of the user
+							rmssd = (float) Math.sqrt(ssd);
+//							rmssd = Math.max(Math.min(rmssd, DataProcess.MAX_HRV), 0);
+//							*not sure if this ^ is useful...we don't have a data process module like this proj did?
+							this.HRV = rmssd;
+						}
+
+						return rmssd;
+
+//					QS = true;                              // set Quantified Self flag
+					// QS FLAG IS NOT CLEARED INSIDE THIS ISR
+				}
+			}
+//
+//		void interruptSetup()  {  // CHECK OUT THE Timer_Interrupt_Notes TAB FOR MORE ON INTERRUPTS
+//			// Initializes Timer2 to throw an interrupt every 2mS.
+//			TCCR2A = 0x02;     // DISABLE PWM ON DIGITAL PINS 3 AND 11, AND GO INTO CTC MODE
+//			TCCR2B = 0x06;     // DON'T FORCE COMPARE, 256 PRESCALER
+//			OCR2A = 0X7C;      // SET THE TOP OF THE COUNT TO 124 FOR 500Hz SAMPLE RATE
+//			TIMSK2 = 0x02;     // ENABLE INTERRUPT ON MATCH BETWEEN TIMER2 AND OCR2A
+//			sei();             // MAKE SURE GLOBAL INTERRUPTS ARE ENABLED
+
+		Log.i("What Values?", String.format("%d, %d, %d, %l", P, T, mag, BPM));
+		return mag;
+		}
+
+//
+//// THIS IS THE TIMER 2 INTERRUPT SERVICE ROUTINE.
+//// Timer 2 makes sure that we take a reading every 2 miliseconds
+//		ISR(TIMER2_COMPA_vect){                         // triggered when Timer2 counts to 124
+//			cli();                                      // disable interrupts while we do this
+//			Signal = analogRead(pulsePin);              // read the Pulse Sensor
+//			sampleCounter += 2;                         // keep track of the time in mS with this variable
+//			int N = sampleCounter - lastBeatTime;       // monitor the time since the last beat to avoid noise
+//
+//			//  find the peak and trough of the pulse wave
+//			if(Signal < thresh && N > (IBI/5)*3){       // avoid dichrotic noise by waiting 3/5 of last IBI
+//				if (Signal < T){                        // T is the trough
+//					T = Signal;                         // keep track of lowest point in pulse wave
+//				}
+//			}
+//
+//			if(Signal > thresh && Signal > P){          // thresh condition helps avoid noise
+//				P = Signal;                             // P is the peak
+//			}                                        // keep track of highest point in pulse wave
+//
+//			//  NOW IT'S TIME TO LOOK FOR THE HEART BEAT
+//			// signal surges up in value every time there is a pulse
+//			if (N > 250){                                   // avoid high frequency noise
+//				if ( (Signal > thresh) && (Pulse == false) && (N > (IBI/5)*3) ){
+//					Pulse = true;                               // set the Pulse flag when we think there is a pulse
+//					digitalWrite(blinkPin,HIGH);                // turn on pin 13 LED
+//					IBI = sampleCounter - lastBeatTime;         // measure time between beats in mS
+//					lastBeatTime = sampleCounter;               // keep track of time for next pulse
+//
+//					if(secondBeat){                        // if this is the second beat, if secondBeat == TRUE
+//						secondBeat = false;                  // clear secondBeat flag
+//						for(int i=0; i<=9; i++){             // seed the running total to get a realisitic BPM at startup
+//							rate[i] = IBI;
+//						}
+//					}
+//
+//					if(firstBeat){                         // if it's the first time we found a beat, if firstBeat == TRUE
+//						firstBeat = false;                   // clear firstBeat flag
+//						secondBeat = true;                   // set the second beat flag
+//						sei();                               // enable interrupts again
+//						return;                              // IBI value is unreliable so discard it
+//					}
+//
+//
+//					// keep a running total of the last 10 IBI values
+//					word runningTotal = 0;                  // clear the runningTotal variable
+//
+//					for(int i=0; i<=8; i++){                // shift data in the rate array
+//						rate[i] = rate[i+1];                  // and drop the oldest IBI value
+//						runningTotal += rate[i];              // add up the 9 oldest IBI values
+//					}
+//
+//					rate[9] = IBI;                          // add the latest IBI to the rate array
+//					runningTotal += rate[9];                // add the latest IBI to runningTotal
+//					runningTotal /= 10;                     // average the last 10 IBI values
+//					BPM = 60000/runningTotal;               // how many beats can fit into a minute? that's BPM!
+//					QS = true;                              // set Quantified Self flag
+//					// QS FLAG IS NOT CLEARED INSIDE THIS ISR
+//				}
+//			}
+//
+//			if (Signal < thresh && Pulse == true){   // when the values are going down, the beat is over
+//				digitalWrite(blinkPin,LOW);            // turn off pin 13 LED
+//				Pulse = false;                         // reset the Pulse flag so we can do it again
+//				amp = P - T;                           // get amplitude of the pulse wave
+//				thresh = amp/2 + T;                    // set thresh at 50% of the amplitude
+//				P = thresh;                            // reset these for next time
+//				T = thresh;
+//			}
+//
+//			if (N > 2500){                           // if 2.5 seconds go by without a beat
+//				thresh = 530;                          // set thresh default
+//				P = 512;                               // set P default
+//				T = 512;                               // set T default
+//				lastBeatTime = sampleCounter;          // bring the lastBeatTime up to date
+//				firstBeat = true;                      // set these to avoid noise
+//				secondBeat = false;                    // when we get the heartbeat back
+//			}
+//
+//			sei();                                   // enable interrupts when youre done!
+//		}// end isr
+//    }
 
     protected void updateAccelText(double mag) {
         textAccelerometer.setText(String.format("Acceleration: %.0f", mag));
