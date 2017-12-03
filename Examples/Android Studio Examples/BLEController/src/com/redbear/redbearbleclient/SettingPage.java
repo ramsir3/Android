@@ -33,7 +33,7 @@ public class SettingPage extends Activity {
 		params.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
 		
 		ImageView imageView = new ImageView(this); 
-		imageView.setImageResource(R.drawable.layers);
+		imageView.setImageResource(R.drawable.biostrike_logo);
 		imageView.setId(1);
 		mLayout.addView(imageView, params);
 		

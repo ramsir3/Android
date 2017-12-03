@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="@color/lgreen">
+
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="5dp"
+        <!--android:layout_margin="5dp"-->
         android:background="@drawable/mainpage_listview_item_bg" >
 
         <ImageView
@@ -26,25 +28,27 @@
             android:layout_margin="10dp"
             android:layout_toLeftOf="@id/detail"
             android:gravity="center_vertical"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/big_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:singleLine="true"
                 android:text="BLE Shield"
                 android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:typeface="serif" />
+                android:typeface="sans" />
 
             <TextView
                 android:id="@+id/uuid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:singleLine="true"
                 android:text="uuid: 713D0000-503E-4C75-BA94-3148F18D941E"
                 android:textColor="@color/black"
@@ -56,6 +60,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:singleLine="true"
                 android:text="service: demo service"
                 android:textColor="@color/black"
@@ -67,6 +72,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:singleLine="true"
                 android:text="name: BLE Shield"
                 android:textColor="@color/black"
@@ -78,17 +84,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif"
                 android:singleLine="true"
                 android:text="local_name: Test Device"
                 android:textColor="@color/black"
                 android:textSize="15sp"
-                android:typeface="serif" />
+                android:typeface="serif"
+                android:visibility="invisible" />
         </LinearLayout>
-    </RelativeLayout> 
-    
-    <View 
+    </RelativeLayout>
+
+    <View
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        />
+        android:visibility="visible" />
 </RelativeLayout>

@@ -82,7 +82,13 @@
         <com.jjoe64.graphview.GraphView
             android:id="@+id/ecg_graph"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="81dp"
+            android:visibility="visible" />
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/hrv_graph"
+            android:layout_width="match_parent"
+            android:layout_height="87dp"
             android:visibility="visible" />
 
         <LinearLayout
@@ -107,11 +113,10 @@
                 android:text="RPE" />
         </LinearLayout>
 
-        <com.jjoe64.graphview.GraphView
-            android:id="@+id/hrv_graph"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="visible" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"></LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -138,8 +143,14 @@
         <com.jjoe64.graphview.GraphView
             android:id="@+id/accelerometer_graph"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="72dp"
             android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/EndofPage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="End of Page" />
 
         <ScrollView
                 android:layout_width="match_parent"
