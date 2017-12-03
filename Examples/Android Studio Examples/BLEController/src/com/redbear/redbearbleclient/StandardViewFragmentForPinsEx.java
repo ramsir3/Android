@@ -42,6 +42,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -55,6 +56,8 @@ import com.redbear.redbearbleclient.data.PinInfo;
 
 public class StandardViewFragmentForPinsEx extends Fragment implements
 		IRBLProtocol {
+
+	RollingWindow ecgroll = new RollingWindow(50);
 
 	final String TAG = "StdViewFragmentForPins";
 	final long timeout = 3000;
@@ -96,7 +99,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     int zeroY = 512;
     int zeroZ = 512;
     final int windowSize = 10;
-    final int timeStep = 50; //ms
+    final int timeStep = 10; //ms
     final int maxPoints = 100 + (int)(windowSize*1000/timeStep);
     final int pinXnumber = 18;
     final int pinYnumber = 19;
@@ -171,6 +174,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         zeroAcc = (Button) view.findViewById(R.id.zeroAcc);
 
         GraphView accelerometer_graph = (GraphView) view.findViewById(R.id.accelerometer_graph);
+		accelerometer_graph.setTitle("Accelerometer Graph");
         accelerometer_series = new LineGraphSeries<DataPoint>();
         accelerometer_graph.addSeries(accelerometer_series);
         accelerometer_graph.setEnabled(true);
@@ -179,8 +183,11 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         viewportA.setMinX(0);
         viewportA.setMaxX(windowSize);
         viewportA.setScrollable(true);
+		GridLabelRenderer acc_label = accelerometer_graph.getGridLabelRenderer();
+		acc_label.setPadding(50);
 
         GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
+		ecg_graph.setTitle("Pulse");
         ecg_series = new LineGraphSeries<DataPoint>();
         ecg_graph.addSeries(ecg_series);
         ecg_graph.setEnabled(true);
@@ -189,8 +196,11 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         viewportE.setMinX(0);
         viewportE.setMaxX(windowSize);
         viewportE.setScrollable(true);
+		GridLabelRenderer ecg_label = accelerometer_graph.getGridLabelRenderer();
+		ecg_label.setPadding(50);
 
 		GraphView hrv_graph = (GraphView) view.findViewById(R.id.hrv_graph);
+		hrv_graph.setTitle("HRV Graph");
 		hrv_series = new LineGraphSeries<DataPoint>();
 		hrv_graph.addSeries(hrv_series);
 		hrv_graph.setEnabled(true);
@@ -199,6 +209,8 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		viewportH.setMinX(0);
 		viewportH.setMaxX(windowSize);
 		viewportH.setScrollable(true);
+		GridLabelRenderer hrv_label = accelerometer_graph.getGridLabelRenderer();
+		hrv_label.setPadding(100);
 
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
@@ -262,12 +274,12 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
                             //if (pinH != null) {
                             if (pinX != null && pinY != null && pinZ != null && pinH != null) {
                                 Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
-                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time, timeStep);
+                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time++, timeStep);
                                 Log.i(TAG, "Acc Series: " + time + ", " + accelerometer_series.getHighestValueX());
                                 Log.i(TAG, String.format("h: %d", pinH.value));
-                                double[] em = updateECGSeries(pinH, time, timeStep);
+                                double[] em = updateECGSeries(pinH, time++, timeStep);
                                 Log.i(TAG, "ECG Series: " + time + ", " + ecg_series.getHighestValueX());
-								Log.i(TAG, String.format("ibi: %f", em[2]));
+								Log.i(TAG, String.format("HRV: %f", em[2]));
 								Log.i(TAG, "HRV Series: " + time + ", " + hrv_series.getHighestValueX());
 
                                 updateAccelText(am);
@@ -1067,18 +1079,20 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     protected double[] updateECGSeries(PinInfo pinH, double time, int timeStep) {
 //	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
 
-        double mag = pinH.value;
-//    mag = Math.pow(mag, 0.5);
+        ecgroll.append(pinH.value);
+		double mag = ecgroll.avg();
 
 		double[] BPM_CI = calcBPM(mag, timeStep);
 		double BPM = BPM_CI[0];
 		double CI = BPM_CI[1];
+		long runningTotal = (long) BPM_CI[2];
 
-		double[] HRV_RPE = calcHRV();
+		double[] HRV_RPE = calcHRV(BPM,runningTotal);
 		double HRV = HRV_RPE[0];
 		double RPE = HRV_RPE[1];
 
-		ecg_series.appendData(new DataPoint((time * timeStep)/1000.0, BPM), true, maxPoints);
+		ecg_series.appendData(new DataPoint((time * timeStep)/1000.0, mag), true, maxPoints);
+		//currently using mag, which shows pulse and not HR
 		hrv_series.appendData(new DataPoint((time * timeStep)/1000.0, HRV), true, maxPoints);
 
 		double[] outs = {mag, BPM, HRV, CI, RPE};
@@ -1089,6 +1103,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		//code adapted from WorldFamousElectronics/PulseSensor_Amped_Arduino
 		long BPM = 0;
 		double CI = 0;
+		long runningTotal = 0;                  // clear the runningTotal variable
 
 		sampleCounter += timeStep;                         // keep track of the time in mS with this variable, currently sampling every 2mS
 		double N = sampleCounter - lastBeatTime;       // monitor the time since the last beat to avoid noise
@@ -1103,8 +1118,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		}                                        // keep track of highest point in pulse wave
 
 //		  NOW IT'S TIME TO LOOK FOR THE HEART BEAT
-		//useful both to update IBI*
-//		  signal surges up in value every time there is a pulse
+		//signal surges up in value every time there is a pulse
 //		if (N > 250) {                                   // avoid high frequency noise
 			if ((mag > thresh) && (Pulse == false) && (N > (IBI / 5) * 3)) {
 				Log.i("mag > thresh?", "YIPPEE!");
@@ -1127,8 +1141,6 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 				}
 
 				// keep a running total of the last 10 IBI values
-				long runningTotal = 0;                  // clear the runningTotal variable
-
 				for (int i = 0; i <= 8; i++) {                // shift data in the rate array
 					rate[i] = rate[i + 1];                  // and drop the oldest IBI value
 					runningTotal += rate[i];              // add up the 9 oldest IBI values
@@ -1138,10 +1150,10 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 				runningTotal += rate[9];                // add the latest IBI to runningTotal
 				runningTotal /= 10;                     // average the last 10 IBI values
 				if (runningTotal > 0) {
+					//HR is 60000/IBI, so runningTotal might be the new IBI? If so...
 					BPM = 60000 / runningTotal;               // how many beats can fit into a minute? that's BPM!
 				}
 				CI = BPM * SV / (SA);
-				//HR is 60000/IBI, so runningTotal might be the new IBI? If so...
 			}
 //		}
 			if (mag < thresh && Pulse == true){   // when the values are going down, the beat is over
@@ -1164,18 +1176,17 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 //
 		Log.i("What Values?", String.format("%f, %f, %f, %d", P, T, mag, BPM));
 
-		double[] outs = {BPM, CI};
+		double[] outs = {BPM, CI, runningTotal};
 		return outs;
 	}
 
 
 
-	protected double[] calcHRV() {
+	protected double[] calcHRV(double BPM, long runningTotal) {
 		double HRV = 0;
 		double RPE = 0;
-		long runningTotal = 0;
-		//
-//					adapted from https://github.com/jkeech/BioInk/blob/master/src/com/vitaltech/bioink/User.java
+
+//		adapted from https://github.com/jkeech/BioInk/blob/master/src/com/vitaltech/bioink/User.java
 		boolean hrv_active = false;
 		List<Long> rrq;
 		final int qsize = 20;
@@ -1185,7 +1196,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		int size = rrq.size();
 		//check if new RR interval value has been received. if so, add to the list
 		if(rrq.isEmpty()){
-			rrq.add(runningTotal);
+			rrq.add(runningTotal); //where runningTotal is newest RR interval value
 		}else if(runningTotal != rrq.get(size - 1)){
 			if(rrq.size() < qsize){
 				rrq.add(runningTotal);
@@ -1197,8 +1208,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 			if(qsize == rrq.size() && !hrv_active){
 				hrv_active = true;
 			}
-
-			RPE = runningTotal/10;
+			RPE = BPM/10;
 
 		}else{
 			//no new value to be added, exit
@@ -1357,5 +1367,46 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		textCI.setText(String.format("CI: %.0f", CI));
 		textHRV.setText(String.format("HRV: %.0f", HRV));
 		textRPE.setText(String.format("RPE: %.0f", RPE));
+	}
+
+	private class RollingWindow {
+		double sum;
+		double[] points;
+		int size;
+		int ind;
+
+		public RollingWindow(int maxSize) {
+			this.size = 0;
+			this.points = new double[maxSize];
+			this.sum = 0;
+			this.ind = 0;
+		}
+
+		public void append(double newPoint) {
+			this.sum += newPoint;
+			int next = ((this.ind + 1) % this.points.length);
+			if (this.size < this.points.length) {
+				this.points[ind] = newPoint;
+				this.size++;
+			} else {
+				this.sum -= points[ind];
+				points[ind] = newPoint;
+			}
+			this.ind = next;
+		}
+
+		public double avg() {
+			return size > 0 ? sum/size : 0;
+		}
+
+		public boolean isFull() {
+			return this.size == this.points.length;
+		}
+
+		public void clear() {
+			this.size = 0;
+			this.sum = 0;
+			this.ind = 0;
+		}
 	}
 }
