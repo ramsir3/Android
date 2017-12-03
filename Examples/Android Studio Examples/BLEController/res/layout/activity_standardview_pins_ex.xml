@@ -1,93 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView  xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
     <LinearLayout
-        android:id="@+id/headview_area"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:background="@drawable/mainpage_listview_item_bg"
-        android:orientation="horizontal" >
-
-        <TextView
-            android:id="@+id/text_devicename"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left|center_vertical"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="name"
-            android:textColor="@android:color/black"
-            android:textSize="20sp" />
-
-        <TextView
-            android:id="@+id/text_rssi"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right|center_vertical"
-            android:layout_weight="1"
-            android:text="rssi"
-            android:gravity="center"
-            android:textColor="@android:color/black"
-            android:textSize="20sp" />
-    </LinearLayout>
-
-    <ProgressBar
-        android:id="@+id/pin_loading"
-        style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Inverse"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <Button
-        android:id="@+id/zeroAcc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Zero Acceleration" />
-
-    <TextView
-        android:id="@+id/Accelerometer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Acceleration" />
-
-    <com.jjoe64.graphview.GraphView
-        android:id="@+id/accelerometer_graph"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:visibility="visible" />
-
-    <TextView
-        android:id="@+id/ECG"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Heart Rate" />
-
-    <com.jjoe64.graphview.GraphView
-        android:id="@+id/ecg_graph"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:visibility="visible" />
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:fillViewport="true"
-        android:visibility="visible">
-
+        android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/pins_list"
+            android:id="@+id/headview_area"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_margin="10dp"
+            android:background="@drawable/mainpage_listview_item_bg"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/text_devicename"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left|center_vertical"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="name"
+                android:textColor="@android:color/black"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/text_rssi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right|center_vertical"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="rssi"
+                android:textColor="@android:color/black"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/pin_loading"
+            style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Inverse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/zeroAcc"
+            style="@android:style/Widget.Button.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="casual"
+            android:text="Zero Acceleration"
+            android:textAppearance="@android:style/TextAppearance" />
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/ECG"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Heart Rate"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/HRV"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Heart Rate Variability" />
+            </LinearLayout>
+
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/ecg_graph"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="visible" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/CI"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cardiac Index"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/RPE"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="RPE" />
+        </LinearLayout>
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/hrv_graph"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="visible" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/Accelerometer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Acceleration" />
+
+            <TextView
+                android:id="@+id/Force"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Force" />
 
         </LinearLayout>
-    </ScrollView>
 
-</LinearLayout>
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/accelerometer_graph"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="visible" />
+
+        <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fillViewport="true"
+                android:visibility="visible">
+
+
+                <LinearLayout
+                    android:id="@+id/pins_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                </LinearLayout>
+            </ScrollView>
+
+        </LinearLayout>
+
+</ScrollView>
