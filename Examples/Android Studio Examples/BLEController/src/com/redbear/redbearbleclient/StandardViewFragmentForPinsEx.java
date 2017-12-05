@@ -88,12 +88,20 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	LineGraphSeries<DataPoint> hrv_series;
 
     Button zeroAcc;
+    Button HRFatButton;
+    Button RPEFatButton;
+    Button HRVFatButton;
+    Button CIFatButton;
+    Button ForceFatButton;
+    double fatcounter = 0;
+
 	TextView textAccelerometer;
 	TextView textECG;
 	TextView textForce;
 	TextView textCI;
 	TextView textHRV;
 	TextView textRPE;
+	TextView textFatIndCount;
 
     int zeroX = 512;
     int zeroY = 512;
@@ -177,11 +185,20 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		textCI = (TextView) view.findViewById(R.id.CI);
 		textHRV = (TextView) view.findViewById(R.id.HRV);
 		textRPE = (TextView) view.findViewById(R.id.RPE);
+		textFatIndCount = (TextView) view.findViewById(R.id.FatIndCount);
 
         zeroAcc = (Button) view.findViewById(R.id.zeroAcc);
+		HRFatButton = (Button) view.findViewById(R.id.HRFatButton);
+		RPEFatButton = (Button) view.findViewById(R.id.RPEFatButton);
+		HRVFatButton = (Button) view.findViewById(R.id.HRVFatButton);
+		CIFatButton = (Button) view.findViewById(R.id.CIFatButton);
+		ForceFatButton = (Button) view.findViewById(R.id.ForceFatButton);
 
-        GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
-		ecg_graph.setTitle("Pulse");
+//	to link the xml with this file	zeroAcc = (Button) view.findViewById(R.id.zeroAcc);
+//	to set colour of the button - changed, because the original can just set on xml file	zeroAcc.setBackgroundColor();
+
+		GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
+		ecg_graph.setTitle("Raw Pulse Signal");
         ecg_series = new LineGraphSeries<DataPoint>();
         ecg_graph.addSeries(ecg_series);
         ecg_graph.setEnabled(true);
@@ -295,6 +312,9 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
                                 updateAccelText(am);
                                 updateECGText(em[1]);		//double[] outs = {mag, BPM, HRV, CI, RPE};
 								updateOtherMetricsText(am*mass, em[3], em[2], em[4]);
+								updateFatigueIndicators(em[1], em[4], em[2], em[3], am*mass);
+								//anything that needs to happen every 10 ms needs to go here
+								//updateFatigueIndicators
                             }
 //            mHandler.postDelayed(this, 200);
                         }
@@ -1378,12 +1398,6 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     protected void updateECGText(double mag) {
         textECG.setText(String.format("Heart Rate: %.0f", mag));
     }
-//	TextView textAccelerometer;
-//	TextView textECG;
-//	TextView textForce;
-//	TextView textCI;
-//	TextView textHRV;
-//	TextView textRPE;
 
 	protected void updateOtherMetricsText(double force, double CI, double HRV, double RPE) {
 		textForce.setText(String.format("Force: %.0f", force));
@@ -1391,6 +1405,53 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		textHRV.setText(String.format("HRV: %.1f", HRV));
 		textRPE.setText(String.format("RPE: %.0f", RPE));
 	}
+
+	protected void updateFatigueIndicators(double HR, double RPE, double HRV, double CI, double force) {
+
+		fatcounter = 0; //reset every time
+
+		if(HR > 80){ //set this based on avg bpm
+			HRFatButton.setBackgroundColor(Color.RED);
+			fatcounter = fatcounter++;
+		}else{
+			HRFatButton.setBackgroundColor(Color.GREEN);
+		}
+
+		if(RPE > 14){
+			RPEFatButton.setBackgroundColor(Color.RED);
+			fatcounter = fatcounter++;
+		}else{
+			RPEFatButton.setBackgroundColor(Color.GREEN);
+		}
+
+		if(HRV > 59.3){
+			HRVFatButton.setBackgroundColor(Color.RED);
+			fatcounter = fatcounter++;
+		}else{
+			HRVFatButton.setBackgroundColor(Color.GREEN);
+		}
+
+		if(CI > 4){
+			CIFatButton.setBackgroundColor(Color.RED);
+			fatcounter = fatcounter++;
+		}else{
+			CIFatButton.setBackgroundColor(Color.GREEN);
+		}
+
+		if(force > 1160){
+			ForceFatButton.setBackgroundColor(Color.RED);
+			fatcounter = fatcounter++;
+		}else{
+			ForceFatButton.setBackgroundColor(Color.GREEN);
+		}
+
+		if(fatcounter>0){
+			textFatIndCount.setText(String.format("Based on %.0f of 5 indicators, you may be fatigued.", fatcounter));
+		}else{
+			textFatIndCount.setText(String.format("Based on %.0f of 5 indicators, you are likely not", fatcounter));
+		}
+	}
+
 
 	private class RollingWindow {
 		double sum;

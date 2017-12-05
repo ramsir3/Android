@@ -54,7 +54,8 @@
             android:layout_height="wrap_content"
             android:background="@color/red"
             android:fontFamily="sans-serif"
-            android:text="Zero Acceleration"
+            android:text="(Tap to Zero Acceleration)"
+            android:layout_margin="10dp"
             android:textAppearance="@android:style/TextAppearance"
             android:textStyle="bold" />
 
@@ -88,6 +89,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingLeft="10sp"
+                android:textSize="18sp"
                 android:text="Heart Rate:"
                 android:visibility="visible" />
 
@@ -97,6 +99,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingLeft="10sp"
+                android:textSize="18sp"
                 android:text="Heart Rate Variability:" />
         </LinearLayout>
 
@@ -112,6 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Cardiac Index:"
+                android:textSize="18sp"
                 android:visibility="visible"
                 android:paddingLeft="10sp"/>
 
@@ -121,6 +125,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:paddingLeft="10sp"
+                android:textSize="18sp"
                 android:text="RPE:" />
         </LinearLayout>
 
@@ -147,6 +152,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingLeft="10sp"
+                android:textSize="18sp"
                 android:text="Acceleration:" />
 
             <TextView
@@ -155,6 +161,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingLeft="10sp"
+                android:textSize="18sp"
                 android:text="Force:" />
 
         </LinearLayout>
@@ -163,15 +170,163 @@
             android:id="@+id/EndofPage"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="End of Page"
-            android:visibility="invisible" />
+            android:text="-----------"
+            android:paddingLeft="270sp"/>
+
+        <TextView
+            android:id="@+id/FatigueInd"
+            android:layout_width="match_parent"
+            android:layout_height="39dp"
+            android:background="@color/yellow"
+            android:fontFamily="sans-serif"
+            android:gravity="fill_vertical"
+            android:paddingLeft="220sp"
+            android:text="Fatigue Indications"
+            android:textAlignment="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:typeface="sans" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="fill_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/HRFatText"
+                android:layout_width="303dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:paddingLeft="147sp"
+                android:text="Per Heart Rate"
+                android:textAlignment="textStart"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/HRFatButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="fill_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/RPEFatText"
+                android:layout_width="303dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:paddingLeft="65sp"
+                android:text="Per Rate of Perceived Exertion (RPE)"
+                android:textAlignment="textStart"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/RPEFatButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="fill_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/HRVFatText"
+                android:layout_width="303dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:paddingLeft="132sp"
+                android:text="Per HR Variability"
+                android:textAlignment="textStart"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/HRVFatButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="fill_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/CIFatText"
+                android:layout_width="303dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:paddingLeft="132sp"
+                android:text="Per Cardiac Index"
+                android:textAlignment="textStart"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/CIFatButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="fill_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/ForceFatText"
+                android:layout_width="303dp"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:paddingLeft="160sp"
+                android:text="Per Force"
+                android:textAlignment="textStart"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/ForceFatButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="fill_vertical"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/FatIndCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textMultiLine" />
+        </LinearLayout>
 
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:fillViewport="true">
-
 
             <LinearLayout
                 android:id="@+id/pins_list"
