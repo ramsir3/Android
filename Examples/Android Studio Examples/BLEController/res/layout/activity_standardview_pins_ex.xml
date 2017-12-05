@@ -171,7 +171,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="-----------"
-            android:paddingLeft="270sp"/>
+            android:paddingLeft="175sp"/>
 
         <TextView
             android:id="@+id/FatigueInd"
@@ -180,7 +180,7 @@
             android:background="@color/yellow"
             android:fontFamily="sans-serif"
             android:gravity="fill_vertical"
-            android:paddingLeft="220sp"
+            android:paddingLeft="125sp"
             android:text="Fatigue Indications"
             android:textAlignment="center"
             android:textSize="18sp"
@@ -223,7 +223,7 @@
                 android:layout_height="30dp"
                 android:layout_weight="1"
                 android:paddingLeft="65sp"
-                android:text="Per Rate of Perceived Exertion (RPE)"
+                android:text="Per Rate of Perceived Exertion"
                 android:textAlignment="textStart"
                 android:textSize="16sp" />
 
@@ -318,7 +318,8 @@
                 android:id="@+id/FatIndCount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
+                android:ems="8"
+                android:textSize="12sp"
                 android:inputType="textMultiLine" />
         </LinearLayout>
 

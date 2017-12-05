@@ -93,7 +93,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     Button HRVFatButton;
     Button CIFatButton;
     Button ForceFatButton;
-    double fatcounter = 0;
+    int fatcounter = 0;
 
 	TextView textAccelerometer;
 	TextView textECG;
@@ -1412,43 +1412,43 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
 		if(HR > 80){ //set this based on avg bpm
 			HRFatButton.setBackgroundColor(Color.RED);
-			fatcounter = fatcounter++;
+			fatcounter++;
 		}else{
 			HRFatButton.setBackgroundColor(Color.GREEN);
 		}
 
 		if(RPE > 14){
 			RPEFatButton.setBackgroundColor(Color.RED);
-			fatcounter = fatcounter++;
+			fatcounter++;
 		}else{
 			RPEFatButton.setBackgroundColor(Color.GREEN);
 		}
 
 		if(HRV > 59.3){
 			HRVFatButton.setBackgroundColor(Color.RED);
-			fatcounter = fatcounter++;
+			fatcounter++;
 		}else{
 			HRVFatButton.setBackgroundColor(Color.GREEN);
 		}
 
 		if(CI > 4){
 			CIFatButton.setBackgroundColor(Color.RED);
-			fatcounter = fatcounter++;
+			fatcounter++;
 		}else{
 			CIFatButton.setBackgroundColor(Color.GREEN);
 		}
 
 		if(force > 1160){
 			ForceFatButton.setBackgroundColor(Color.RED);
-			fatcounter = fatcounter++;
+			fatcounter++;
 		}else{
 			ForceFatButton.setBackgroundColor(Color.GREEN);
 		}
 
 		if(fatcounter>0){
-			textFatIndCount.setText(String.format("Based on %.0f of 5 indicators, you may be fatigued.", fatcounter));
+			textFatIndCount.setText(String.format("Based on %d of 5 indicators, you may be fatigued.", fatcounter));
 		}else{
-			textFatIndCount.setText(String.format("Based on %.0f of 5 indicators, you are likely not", fatcounter));
+			textFatIndCount.setText(String.format("Based on %d of 5 indicators, you are likely not fatigued.", fatcounter));
 		}
 	}
 
