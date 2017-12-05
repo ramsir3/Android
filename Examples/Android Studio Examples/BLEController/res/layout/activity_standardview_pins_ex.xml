@@ -59,42 +59,46 @@
             android:textStyle="bold" />
 
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/ECG"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Heart Rate:"
-                    android:visibility="visible"
-                    android:paddingLeft="10sp"/>
-
-                <TextView
-                    android:id="@+id/HRV"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Heart Rate Variability:"
-                    android:paddingLeft="10sp"/>
-            </LinearLayout>
-
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="23dp"
+            android:orientation="vertical"></LinearLayout>
 
         <com.jjoe64.graphview.GraphView
             android:id="@+id/ecg_graph"
             android:layout_width="match_parent"
-            android:layout_height="144dp"
+            android:layout_height="176dp"
             android:visibility="visible" />
 
         <com.jjoe64.graphview.GraphView
             android:id="@+id/hrv_graph"
             android:layout_width="match_parent"
-            android:layout_height="144dp"
+            android:layout_height="188dp"
             android:visibility="visible" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/ECG"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingLeft="10sp"
+                android:text="Heart Rate:"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/HRV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingLeft="10sp"
+                android:text="Heart Rate Variability:" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -114,16 +118,22 @@
             <TextView
                 android:id="@+id/RPE"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="RPE:"
-                android:paddingLeft="10sp"/>
+                android:paddingLeft="10sp"
+                android:text="RPE:" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="24dp"
             android:orientation="vertical"></LinearLayout>
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/accelerometer_graph"
+            android:layout_width="match_parent"
+            android:layout_height="202dp"
+            android:visibility="visible" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -136,30 +146,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Acceleration:"
-                android:paddingLeft="10sp"/>
+                android:paddingLeft="10sp"
+                android:text="Acceleration:" />
 
             <TextView
                 android:id="@+id/Force"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Force:"
-                android:paddingLeft="10sp"/>
+                android:paddingLeft="10sp"
+                android:text="Force:" />
 
         </LinearLayout>
-
-        <com.jjoe64.graphview.GraphView
-            android:id="@+id/accelerometer_graph"
-            android:layout_width="match_parent"
-            android:layout_height="144dp"
-            android:visibility="visible" />
 
         <TextView
             android:id="@+id/EndofPage"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="End of Page" />
+            android:text="End of Page"
+            android:visibility="invisible" />
 
         <ScrollView
             android:layout_width="match_parent"

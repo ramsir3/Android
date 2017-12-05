@@ -113,7 +113,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	double CI = 0;
 	double RPE = 0;
 
-	final double mass = 70; //average health man is 70kg
+	final double mass = 0.58; //average weight of fist
 	final double SV = 0.07; //assuming average healthy 70kg man, which is 70mL
 	final double height = 1.77; //m of average male https://www.cdc.gov/nchs/fastats/body-measurements.htm
 	final double waistcirc = 1.015; //m
@@ -135,6 +135,8 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
 	RollingWindow bpmrtrw = new RollingWindow(10);
 	double runningTotal = 0;
+
+	RollingWindow hrvrw = new RollingWindow(10);
 
 	//added variables?
 	double IBI = 0; //just has to make it so that IBI/5*3 is smaller than N with N being 2
@@ -178,22 +180,6 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
         zeroAcc = (Button) view.findViewById(R.id.zeroAcc);
 
-        GraphView accelerometer_graph = (GraphView) view.findViewById(R.id.accelerometer_graph);
-		accelerometer_graph.setTitle("Accelerometer Graph");
-        accelerometer_series = new LineGraphSeries<DataPoint>();
-        accelerometer_graph.addSeries(accelerometer_series);
-        accelerometer_graph.setEnabled(true);
-        Viewport viewportA = accelerometer_graph.getViewport();
-        viewportA.setXAxisBoundsManual(true);
-		viewportA.setYAxisBoundsManual(true);
-        viewportA.setMinX(0);
-        viewportA.setMaxX(windowSize);
-		viewportA.setMinY(0);
-		viewportA.setMaxY(8);
-        viewportA.setScrollable(true);
-		GridLabelRenderer acc_label = accelerometer_graph.getGridLabelRenderer();
-		acc_label.setPadding(50);
-
         GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
 		ecg_graph.setTitle("Pulse");
         ecg_series = new LineGraphSeries<DataPoint>();
@@ -205,7 +191,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         viewportE.setMaxX(windowSize);
         viewportE.setScrollable(true);
 		GridLabelRenderer ecg_label = ecg_graph.getGridLabelRenderer();
-		ecg_label.setPadding(50);
+		ecg_label.setPadding(65);
 
 		GraphView hrv_graph = (GraphView) view.findViewById(R.id.hrv_graph);
 		hrv_graph.setTitle("HRV Graph");
@@ -218,7 +204,23 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		viewportH.setMaxX(windowSize);
 		viewportH.setScrollable(true);
 		GridLabelRenderer hrv_label = hrv_graph.getGridLabelRenderer();
-		hrv_label.setPadding(50);
+		hrv_label.setPadding(65);
+
+		GraphView accelerometer_graph = (GraphView) view.findViewById(R.id.accelerometer_graph);
+		accelerometer_graph.setTitle("Accelerometer Graph");
+		accelerometer_series = new LineGraphSeries<DataPoint>();
+		accelerometer_graph.addSeries(accelerometer_series);
+		accelerometer_graph.setEnabled(true);
+		Viewport viewportA = accelerometer_graph.getViewport();
+		viewportA.setXAxisBoundsManual(true);
+		viewportA.setYAxisBoundsManual(true);
+		viewportA.setMinX(0);
+		viewportA.setMaxX(windowSize);
+		viewportA.setMinY(0);
+		viewportA.setMaxY(10);
+		viewportA.setScrollable(true);
+		GridLabelRenderer acc_label = accelerometer_graph.getGridLabelRenderer();
+		acc_label.setPadding(50);
 
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
@@ -1201,66 +1203,73 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	protected double[] calcHRV(double BPM, long runningTotal) {
 
 //		adapted from https://github.com/jkeech/BioInk/blob/master/src/com/vitaltech/bioink/User.java
-		boolean hrv_active = false;
-		List<Long> rrq;
-		final int qsize = 20;
-		rrq = Collections.synchronizedList(new ArrayList<Long>());
-
-//		take addRR out of the separate function?
-		int size = rrq.size();
-		//check if new RR interval value has been received. if so, add to the list
-		if(rrq.isEmpty()){
-			rrq.add(runningTotal); //where runningTotal is newest RR interval value
-		}else if(runningTotal != rrq.get(size - 1)){
-			if(rrq.size() < qsize){
-				rrq.add(runningTotal);
-			}else{
-				//list is full, remove oldest value and add new to the end of the list
-				rrq.remove(0);
-				rrq.add(runningTotal);
-			} //check if hrv was inactive and needs to be activated
-			if(qsize == rrq.size() && !hrv_active){
-				hrv_active = true;
-			}
+		if (BPM > 0) {
+			double x = (60000.0 / BPM) - IBI;
+			double y = Math.pow(x, 2);
+			hrvrw.append(y);
+			Log.i("x, ", "" + x + ", " + y + ", " + hrvrw.avg() + hrvrw.toString());
+			HRV = Math.pow(hrvrw.avg(), 0.5);
+		}
+//		boolean hrv_active = false;
+//		List<Long> rrq;
+//		final int qsize = 20;
+//		rrq = Collections.synchronizedList(new ArrayList<Long>());
+//
+////		take addRR out of the separate function?
+//		int size = rrq.size();
+//		//check if new RR interval value has been received. if so, add to the list
+//		if(rrq.isEmpty()){
+//			rrq.add(runningTotal); //where runningTotal is newest RR interval value
+//		}else if(runningTotal != rrq.get(size - 1)){
+//			if(rrq.size() < qsize){
+//				rrq.add(runningTotal);
+//			}else{
+//				//list is full, remove oldest value and add new to the end of the list
+//				rrq.remove(0);
+//				rrq.add(runningTotal);
+//			} //check if hrv was inactive and needs to be activated
+//			if(qsize == rrq.size() && !hrv_active){
+//				hrv_active = true;
+//			}
 			RPE = BPM/10;
-
-		}else{
-			//no new value to be added, exit
-		}
-
-//					calculateHRV without the function
-		float rmssd = 0f;
-		if(hrv_active){
-			float ssd = 0;
-			float previous = -1;
-
-			synchronized(rrq) {
-				Iterator<Long> i = rrq.iterator(); // Must be in synchronized block
-
-				while(i.hasNext()){
-					float rri = Math.abs(i.next());
-					if(previous == -1){
-						previous = Math.abs(rri);
-						continue;
-					}else{
-						//calculate consecutive difference
-						float diff = previous - rri;
-						diff = diff * diff;
-						//add the new square difference to the total
-						ssd = ssd + diff;
-						//update the previous value
-						previous = rri;
-					}
-				}
-			}
-			//calculate the MSSD
-			ssd = ssd / (rrq.size() - 1);
-			//calculate the RMSSD value and update it to the HRV of the user
-			rmssd = (float) Math.sqrt(ssd);
-//							rmssd = Math.max(Math.min(rmssd, DataProcess.MAX_HRV), 0);
-//							*not sure if this ^ is useful...we don't have a data process module like this proj did?
-			HRV = rmssd;
-		}
+//
+//		}else{
+//			//no new value to be added, exit
+//		}
+//
+////					calculateHRV without the function
+//		float rmssd = 0f;
+//		if(hrv_active){
+//			float ssd = 0;
+//			float previous = -1;
+//
+//			synchronized(rrq) {
+//				Iterator<Long> i = rrq.iterator(); // Must be in synchronized block
+//
+//				while(i.hasNext()){
+//					float rri = Math.abs(i.next());
+//					if(previous == -1){
+//						previous = Math.abs(rri);
+//						continue;
+//					}else{
+//						//calculate consecutive difference
+//						float diff = previous - rri;
+//						diff = diff * diff;
+//						//add the new square difference to the total
+//						ssd = ssd + diff;
+//						//update the previous value
+//						previous = rri;
+//					}
+//				}
+//			}
+//			//calculate the MSSD
+//			ssd = ssd / (rrq.size() - 1);
+//			//calculate the RMSSD value and update it to the HRV of the user
+//			rmssd = (float) Math.sqrt(ssd);
+////							rmssd = Math.max(Math.min(rmssd, DataProcess.MAX_HRV), 0);
+////							*not sure if this ^ is useful...we don't have a data process module like this proj did?
+//			HRV = rmssd;
+//		}
 
 //						return rmssd;
 
@@ -1421,6 +1430,11 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 			this.size = 0;
 			this.sum = 0;
 			this.ind = 0;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("Sum: %f, Size: %d", this.sum, this.size);
 		}
 	}
 }
