@@ -47,18 +47,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/zeroAcc"
-            style="@android:style/Widget.Button.Small"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/red"
-            android:fontFamily="sans-serif"
-            android:text="(Tap to Zero Acceleration)"
-            android:layout_margin="10dp"
-            android:textAppearance="@android:style/TextAppearance"
-            android:textStyle="bold" />
-
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -163,6 +151,19 @@
                 android:paddingLeft="10sp"
                 android:textSize="18sp"
                 android:text="Force:" />
+
+            <Button
+                android:id="@+id/zeroAcc"
+                style="@android:style/Widget.Button.Small"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:layout_weight="1"
+                android:background="@color/red"
+                android:fontFamily="sans-serif"
+                android:text="(Tap to Zero Acceleration)"
+                android:textAppearance="@android:style/TextAppearance"
+                android:textStyle="bold" />
 
         </LinearLayout>
 

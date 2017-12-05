@@ -234,7 +234,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		viewportA.setMinX(0);
 		viewportA.setMaxX(windowSize);
 		viewportA.setMinY(0);
-		viewportA.setMaxY(10);
+		viewportA.setMaxY(50);
 		viewportA.setScrollable(true);
 		GridLabelRenderer acc_label = accelerometer_graph.getGridLabelRenderer();
 		acc_label.setPadding(50);
@@ -1096,14 +1096,14 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	protected double updateAccelerometerSeries(PinInfo pinX, PinInfo pinY, PinInfo pinZ, double time, int timeStep) {
 //	    Log.i("What Values?", String.format("%d, %d, %d", pinX.value, pinY.value, pinZ.value));
 	    double mag = Math.pow( convert2Gs(pinX.value, zeroX), 2 ) + Math.pow( convert2Gs(pinY.value, zeroY), 2 ) + Math.pow( convert2Gs(pinZ.value, zeroZ), 2 );
-        mag = Math.pow(mag, 0.5);
+        mag = Math.pow(mag, 0.5)*9.807;
 	    accelerometer_series.appendData(new DataPoint((time * timeStep)/1000.0, mag), true, maxPoints);
 //	    force = mag*mass;
 	    return mag;
     }
 
     protected double convert2Gs (int rawSensor, int zero) {
-	    return ((rawSensor - zero) * 200.0 / zero);
+	    return ((rawSensor - zero) * 200.0 / 512);
     }
 
     protected double[] updateECGSeries(PinInfo pinH, double time, int timeStep) {
