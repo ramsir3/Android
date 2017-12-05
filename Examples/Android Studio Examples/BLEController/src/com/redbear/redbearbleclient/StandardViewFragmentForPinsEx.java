@@ -57,7 +57,7 @@ import com.redbear.redbearbleclient.data.PinInfo;
 public class StandardViewFragmentForPinsEx extends Fragment implements
 		IRBLProtocol {
 
-	RollingWindow ecgroll = new RollingWindow(50);
+	RollingWindow ecgroll = new RollingWindow(13);
 
 	final String TAG = "StdViewFragmentForPins";
 	final long timeout = 3000;
@@ -110,9 +110,11 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
     PinInfo pinZ;
     PinInfo pinH;
     double time = 0;
+	double CI = 0;
+	double RPE = 0;
 
 	final double mass = 70; //average health man is 70kg
-	final double SV = 70; //assuming average healthy 70kg man
+	final double SV = 0.07; //assuming average healthy 70kg man, which is 70mL
 	final double height = 1.77; //m of average male https://www.cdc.gov/nchs/fastats/body-measurements.htm
 	final double waistcirc = 1.015; //m
 	final double waistr = waistcirc/(2*Math.PI);
@@ -124,10 +126,15 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	double lastBeatTime = 0;           // used to find IBI
 	double P = 512;                      // used to find peak in pulse wave, seeded
 	double T = 512;                     // used to find trough in pulse wave, seeded
-	double thresh = 430;                // used to find instant moment of heart beat, seeded
+	double thresh = 512;                // used to find instant moment of heart beat, seeded
 	double amp = 0;                   // used to hold amplitude of pulse waveform, seeded
 	boolean firstBeat = true;        // used to seed rate array so we startup with reasonable BPM
 	boolean secondBeat = false;      // used to seed rate array so we startup with reasonable BPM
+	double BPM = 0;
+	double HRV = 0;
+
+	RollingWindow bpmrtrw = new RollingWindow(10);
+	double runningTotal = 0;
 
 	//added variables?
 	double IBI = 0; //just has to make it so that IBI/5*3 is smaller than N with N being 2
@@ -160,9 +167,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		pins_list = (LinearLayout) view.findViewById(R.id.pins_list);
 		pins_list.setEnabled(false);
 
-//		pins_list.setVisibility(View.GONE);
-//        GraphView ecg_graph = (GraphView) view.findViewById(R.id.ecg_graph);
-//        ecg_graph.addSeries(ecg_series);
+		pins_list.setVisibility(View.GONE);
 
         textAccelerometer = (TextView) view.findViewById(R.id.Accelerometer);
         textECG = (TextView) view.findViewById(R.id.ECG);
@@ -180,8 +185,11 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         accelerometer_graph.setEnabled(true);
         Viewport viewportA = accelerometer_graph.getViewport();
         viewportA.setXAxisBoundsManual(true);
+		viewportA.setYAxisBoundsManual(true);
         viewportA.setMinX(0);
         viewportA.setMaxX(windowSize);
+		viewportA.setMinY(0);
+		viewportA.setMaxY(8);
         viewportA.setScrollable(true);
 		GridLabelRenderer acc_label = accelerometer_graph.getGridLabelRenderer();
 		acc_label.setPadding(50);
@@ -196,7 +204,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
         viewportE.setMinX(0);
         viewportE.setMaxX(windowSize);
         viewportE.setScrollable(true);
-		GridLabelRenderer ecg_label = accelerometer_graph.getGridLabelRenderer();
+		GridLabelRenderer ecg_label = ecg_graph.getGridLabelRenderer();
 		ecg_label.setPadding(50);
 
 		GraphView hrv_graph = (GraphView) view.findViewById(R.id.hrv_graph);
@@ -209,8 +217,8 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		viewportH.setMinX(0);
 		viewportH.setMaxX(windowSize);
 		viewportH.setScrollable(true);
-		GridLabelRenderer hrv_label = accelerometer_graph.getGridLabelRenderer();
-		hrv_label.setPadding(100);
+		GridLabelRenderer hrv_label = hrv_graph.getGridLabelRenderer();
+		hrv_label.setPadding(50);
 
 		mLoading = (ProgressBar) view.findViewById(R.id.pin_loading);
 		if (mDevice != null) {
@@ -239,7 +247,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
             @Override
             public void run() {
-                Log.d(TAG, "HELLO: " + pins.size());
+//                Log.d(TAG, "HELLO: " + pins.size());
                 if (getActivity() == null) {
                     return;
                 }
@@ -273,14 +281,14 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
                             }
                             //if (pinH != null) {
                             if (pinX != null && pinY != null && pinZ != null && pinH != null) {
-                                Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
-                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time++, timeStep);
-                                Log.i(TAG, "Acc Series: " + time + ", " + accelerometer_series.getHighestValueX());
-                                Log.i(TAG, String.format("h: %d", pinH.value));
+//                                Log.i(TAG, String.format("x: %d\ny: %d\nz: %d\n", pinX.value, pinY.value, pinZ.value));
+                                double am = updateAccelerometerSeries(pinX, pinY, pinZ, time, timeStep);
+//                                Log.i(TAG, "Acc Series: " + time + ", " + accelerometer_series.getHighestValueX());
+//                                Log.i(TAG, String.format("Raw Pulse Signal: %d", pinH.value));
                                 double[] em = updateECGSeries(pinH, time++, timeStep);
                                 Log.i(TAG, "ECG Series: " + time + ", " + ecg_series.getHighestValueX());
-								Log.i(TAG, String.format("HRV: %f", em[2]));
-								Log.i(TAG, "HRV Series: " + time + ", " + hrv_series.getHighestValueX());
+//								Log.i(TAG, String.format("HRV: %f", em[2]));
+//								Log.i(TAG, "HRV Series: " + time + ", " + hrv_series.getHighestValueX());
 
                                 updateAccelText(am);
                                 updateECGText(em[1]);		//double[] outs = {mag, BPM, HRV, CI, RPE};
@@ -677,8 +685,8 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 	public void protocolDidReceivePinData(int pin, int mode, int value) {
 		byte _mode = (byte) (mode & 0x0F);
 
-		Log.e(TAG, "protocolDidReceivePinData pin : " + pin + ", _mode : "
-				+ _mode + ", value : " + value);
+//		Log.e(TAG, "protocolDidReceivePinData pin : " + pin + ", _mode : "
+//				+ _mode + ", value : " + value);
 
 		if (pins == null) {
 			return;
@@ -1101,11 +1109,9 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
 	protected double[] calcBPM(double mag, int timeStep) {
 		//code adapted from WorldFamousElectronics/PulseSensor_Amped_Arduino
-		long BPM = 0;
-		double CI = 0;
-		long runningTotal = 0;                  // clear the runningTotal variable
+//		long runningTotal = 0;                  // clear the runningTotal variable
 
-		sampleCounter += timeStep;                         // keep track of the time in mS with this variable, currently sampling every 2mS
+		sampleCounter += timeStep;                         // keep track of the time in mS with this variable
 		double N = sampleCounter - lastBeatTime;       // monitor the time since the last beat to avoid noise
 		if (mag < thresh && N > (IBI / 5) * 3) {       // avoid dichrotic noise by waiting 3/5 of last IBI
 			if (mag < T) {                        // T is the trough
@@ -1120,71 +1126,79 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 //		  NOW IT'S TIME TO LOOK FOR THE HEART BEAT
 		//signal surges up in value every time there is a pulse
 //		if (N > 250) {                                   // avoid high frequency noise
-			if ((mag > thresh) && (Pulse == false) && (N > (IBI / 5) * 3)) {
-				Log.i("mag > thresh?", "YIPPEE!");
-				Pulse = true;                               // set the Pulse flag when we think there is a pulse
-				IBI = sampleCounter - lastBeatTime;         // measure time between beats in mS = R-R interval!
-				lastBeatTime = sampleCounter;               // keep track of time for next pulse
+		Log.i("N", String.format("%f", N));
+		Log.i("IBI", String.format("%f", IBI)); //if 20ms apart, is every 2 ticks
+		Log.i("thresh", String.format("%f", thresh)); //if 20ms apart, is every 2 ticks
 
-				if (secondBeat) {                        // if this is the second beat, if secondBeat == TRUE
-					secondBeat = false;                  // clear secondBeat flag
-					for (int i = 0; i <= 9; i++) {             // seed the running total to get a realistic BPM at startup
-						rate[i] = IBI;
-					}
-				}
+		if ((mag > thresh) && (Pulse == false) && (N > (IBI / 5) * 3)) {
+			Log.i("mag > thresh?", "YIPPEE!");
+			Pulse = true;                               // set the Pulse flag when we think there is a pulse
+			Log.i("LBT, SC", String.format("%f, %f", lastBeatTime, sampleCounter));
+			IBI = sampleCounter - lastBeatTime;         // measure time between beats in mS = R-R interval!
+			lastBeatTime = sampleCounter;               // keep track of time for next pulse
+//				if (secondBeat) {                        // if this is the second beat, if secondBeat == TRUE
+//					secondBeat = false;                  // clear secondBeat flag
+//					for (int i = 0; i <= 9; i++) {             // seed the running total to get a realistic BPM at startup
+//						rate[i] = IBI;
+//					}
+//				}
 
-				if (firstBeat) {                         // if it's the first time we found a beat, if firstBeat == TRUE
-					firstBeat = false;                   // clear firstBeat flag
-					secondBeat = true;                   // set the second beat flag
-					//						sei();                               // enable interrupts again
-					//						return;                              // IBI value is unreliable so discard it
-				}
+//				if (firstBeat) {                         // if it's the first time we found a beat, if firstBeat == TRUE
+//					firstBeat = false;                   // clear firstBeat flag
+//					secondBeat = true;                   // set the second beat flag
+//					//						sei();                               // enable interrupts again
+//					//						return;                              // IBI value is unreliable so discard it
+//				}
 
-				// keep a running total of the last 10 IBI values
-				for (int i = 0; i <= 8; i++) {                // shift data in the rate array
-					rate[i] = rate[i + 1];                  // and drop the oldest IBI value
-					runningTotal += rate[i];              // add up the 9 oldest IBI values
-				}
-
-				rate[9] = IBI;                          // add the latest IBI to the rate array
-				runningTotal += rate[9];                // add the latest IBI to runningTotal
-				runningTotal /= 10;                     // average the last 10 IBI values
-				if (runningTotal > 0) {
-					//HR is 60000/IBI, so runningTotal might be the new IBI? If so...
-					BPM = 60000 / runningTotal;               // how many beats can fit into a minute? that's BPM!
-				}
-				CI = BPM * SV / (SA);
-			}
-//		}
-			if (mag < thresh && Pulse == true){   // when the values are going down, the beat is over
-				// turn off pin 13 LED
-				Pulse = false;                         // reset the Pulse flag so we can do it again
-				amp = P - T;                           // get amplitude of the pulse wave
-				thresh = amp/2 + T;                    // set thresh at 50% of the amplitude
-				P = thresh;                            // reset these for next time
-				T = thresh;
-			}
-
-			if (N > 2500){                           // if 2.5 seconds go by without a beat
-				thresh = 530;                          // set thresh default
-				P = 512;                               // set P default
-				T = 512;                               // set T default
-				lastBeatTime = sampleCounter;          // bring the lastBeatTime up to date
-				firstBeat = true;                      // set these to avoid noise
-				secondBeat = false;                    // when we get the heartbeat back
-			}
+			// keep a running total of the last 10 IBI values
+//				for (int i = 0; i <= 8; i++) {                // shift data in the rate array
+//					rate[i] = rate[i + 1];                  // and drop the oldest IBI value
+//					runningTotal += rate[i];              // add up the 9 oldest IBI values
+//				}
 //
-		Log.i("What Values?", String.format("%f, %f, %f, %d", P, T, mag, BPM));
+//				rate[9] = IBI;                          // add the latest IBI to the rate array
+			bpmrtrw.append(IBI);
+			runningTotal = bpmrtrw.avg();
+
+//				runningTotal += rate[9];                // add the latest IBI to runningTotal
+//				runningTotal /= 10;                     // average the last 10 IBI values
+//				Log.i("IBI", String.format("%f", IBI));
+			Log.i("Runningtotal", String.format("%f", runningTotal));
+
+			if (runningTotal > 0) {
+				//HR is 60000/IBI, so runningTotal might be the new IBI? If so...
+				BPM = 60000 / runningTotal;               // how many beats can fit into a minute? that's BPM
+				Log.i("BPM", String.format("%f", BPM));
+			}
+			CI = BPM * SV / (SA);
+		}
+//		}
+
+		if (mag < thresh && Pulse == true){   // when the values are going down, the beat is over
+			// turn off pin 13 LED
+			Pulse = false;                         // reset the Pulse flag so we can do it again
+			amp = P - T;                           // get amplitude of the pulse wave
+			thresh = amp/2 + T;                    // set thresh at 50% of the amplitude
+			P = thresh;                            // reset these for next time
+			T = thresh;
+		}
+
+		if (N > 2500){                           // if 2.5 seconds go by without a beat
+			thresh = 512;                          // set thresh default
+			P = 512;                               // set P default
+			T = 512;                               // set T default
+			lastBeatTime = sampleCounter;          // bring the lastBeatTime up to date
+			firstBeat = true;                      // set these to avoid noise
+			secondBeat = false;                    // when we get the heartbeat back
+		}
+//
+		Log.i("What Values?", String.format("%f, %f, %f, %f", P, T, mag, BPM));
 
 		double[] outs = {BPM, CI, runningTotal};
 		return outs;
 	}
 
-
-
 	protected double[] calcHRV(double BPM, long runningTotal) {
-		double HRV = 0;
-		double RPE = 0;
 
 //		adapted from https://github.com/jkeech/BioInk/blob/master/src/com/vitaltech/bioink/User.java
 		boolean hrv_active = false;
@@ -1192,7 +1206,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 		final int qsize = 20;
 		rrq = Collections.synchronizedList(new ArrayList<Long>());
 
-//					take addRR out of the separate function?
+//		take addRR out of the separate function?
 		int size = rrq.size();
 		//check if new RR interval value has been received. if so, add to the list
 		if(rrq.isEmpty()){
@@ -1349,7 +1363,7 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 //    }
 
     protected void updateAccelText(double mag) {
-        textAccelerometer.setText(String.format("Acceleration: %.0f", mag));
+        textAccelerometer.setText(String.format("Acceleration: %.1f", mag));
     }
 
     protected void updateECGText(double mag) {
@@ -1364,8 +1378,8 @@ public class StandardViewFragmentForPinsEx extends Fragment implements
 
 	protected void updateOtherMetricsText(double force, double CI, double HRV, double RPE) {
 		textForce.setText(String.format("Force: %.0f", force));
-		textCI.setText(String.format("CI: %.0f", CI));
-		textHRV.setText(String.format("HRV: %.0f", HRV));
+		textCI.setText(String.format("CI: %.1f", CI));
+		textHRV.setText(String.format("HRV: %.1f", HRV));
 		textRPE.setText(String.format("RPE: %.0f", RPE));
 	}
 
